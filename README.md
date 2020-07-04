@@ -142,6 +142,9 @@ the original ai=uthor's APC Back-UPS RS 500 and my APC Back-UPS ES 700.
 edge cases for the network connectivity to apcupsd.  I'd welcome a review from
 someone who know more than I do in this area.
 
+* The test harness (test.pl) needs improving, probably to make use of Test::More
+and giving it the ability to run under Test::Harness 'prove'.
+
 * Anywhere there's a TODO XXX or FIXME label on a comment is indicative
 of something that needs reviewing or improving.
 
