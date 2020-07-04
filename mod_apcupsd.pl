@@ -140,7 +140,7 @@ my $mapping = [
     ['STESTI',   '7.2.1.0',  ASN_INTEGER,   \&to_sched,    ], # upsAdvTestDiagnosticSchedule
     ['SELFTEST', '7.2.3.0',  ASN_INTEGER,   \&to_diag,     ], # upsAdvTestDiagnosticsResults
 
-    ['STATFLAG', '11.1.1.0', ASN_OCTET_STR, \&to_flags,    ], # upsBasicStateOutputState FIXME currently retuns all '0's
+    ['STATFLAG', '11.1.1.0', ASN_OCTET_STR, \&to_flags,    ], # upsBasicStateOutputState
 
     # Here's a list of all the possible things that can be returned from apcupsd, but don't
     # appear above and haven't been considered yet:
@@ -296,47 +296,230 @@ sub to_status {
 }
 
 sub to_flags {
-    # STATFLAG => upsBasicStateOutputState
-    #
-    # According to the mib this is a string of 64 '0' or '1' characters,
-    # FIXME map STATFLAG and any other data we have into the 64 bits
+	# STATFLAG => upsBasicStateOutputState
     
-    #   /* bit values for APC UPS Status Byte (ups->Status) */
-    #define UPS_calibration   0x00000001
-    #define UPS_trim          0x00000002
-    #define UPS_boost         0x00000004
-    #define UPS_online        0x00000008
-    #define UPS_onbatt        0x00000010
-    #define UPS_overload      0x00000020
-    #define UPS_battlow       0x00000040
-    #define UPS_replacebatt   0x00000080
+	#   /* bit values for APC UPS Status Byte (ups->Status) */
+	#define UPS_calibration   0x00000001
+	#define UPS_trim          0x00000002
+	#define UPS_boost         0x00000004
+	#define UPS_online        0x00000008
+	#define UPS_onbatt        0x00000010
+	#define UPS_overload      0x00000020
+	#define UPS_battlow       0x00000040
+	#define UPS_replacebatt   0x00000080
 
-    #   /* Extended bit values added by apcupsd */
-    #define UPS_commlost      0x00000100    /* Communications with UPS lost */
-    #define UPS_shutdown      0x00000200    /* Shutdown in progress */
-    #define UPS_slave         0x00000400    /* Set if this is a slave */
-    #define UPS_slavedown     0x00000800    /* Slave not responding */
-    #define UPS_onbatt_msg    0x00020000    /* Set when UPS_ONBATT message is sent */
-    #define UPS_fastpoll      0x00040000    /* Set on power failure to poll faster */
-    #define UPS_shut_load     0x00080000    /* Set when BatLoad <= percent */
-    #define UPS_shut_btime    0x00100000    /* Set when time on batts > maxtime */
-    #define UPS_shut_ltime    0x00200000    /* Set when TimeLeft <= runtime */
-    #define UPS_shut_emerg    0x00400000    /* Set when battery power has failed */
-    #define UPS_shut_remote   0x00800000    /* Set when remote shutdown */
-    #define UPS_plugged       0x01000000    /* Set if computer is plugged into UPS */
-    #define UPS_battpresent   0x04000000    /* Indicates if battery is connected */
-    
-    # Our input shoudl look like 0x12345678
-    #if($_[0] =~ /^0x([A-Fa-f0-9]{4})([A-Fa-f0-9]{4})$/) {
-        # As some perls still don't handle 64 bit ints well we split into 2 32 bit numbers
-        # convert each into a "binary string", reverse teh strings and put them back together
-        #    return reverse unpack('B32', pack('N', hex($2))) . reverse unpack('B32', pack('N', hex($1)));
-        #}
-    #else# {
-    #return "UNKNOWN";
-    #}
+	#   /* Extended bit values added by apcupsd */
+	#define UPS_commlost      0x00000100    /* Communications with UPS lost */
+	#define UPS_shutdown      0x00000200    /* Shutdown in progress */
+	#define UPS_slave         0x00000400    /* Set if this is a slave */
+	#define UPS_slavedown     0x00000800    /* Slave not responding */
+	#define UPS_onbatt_msg    0x00020000    /* Set when UPS_ONBATT message is sent */
+	#define UPS_fastpoll      0x00040000    /* Set on power failure to poll faster */
+	#define UPS_shut_load     0x00080000    /* Set when BatLoad <= percent */
+	#define UPS_shut_btime    0x00100000    /* Set when time on batts > maxtime */
+	#define UPS_shut_ltime    0x00200000    /* Set when TimeLeft <= runtime */
+	#define UPS_shut_emerg    0x00400000    /* Set when battery power has failed */
+	#define UPS_shut_remote   0x00800000    /* Set when remote shutdown */
+	#define UPS_plugged       0x01000000    /* Set if computer is plugged into UPS */
+	#define UPS_battpresent   0x04000000    /* Indicates if battery is connected */
 
-    return '0' x 64;
+	my $ups_flags = hex($_[0]);
+
+	my snmp_flags = '';
+
+	# Flag  1: Abnormal Condition Present
+	$snmp_flags .= '0';
+
+	# Flag  2: On Battery
+	$snmp_flags .= ($ups_flags & 0x00000010) ? '1' : '0'; # UPS_onbatt
+
+	# Flag  3: Low Battery
+	$snmp_flags .= ($ups_flags & 0x00000040) ? '1' : '0'; # UPS_battlow
+
+	# Flag  4: On Line
+	$snmp_flags .= ($ups_flags & 0x00000008) ? '1' : '0'; # UPS_online
+
+	# Flag  5: Replace Battery
+	$snmp_flags .= ($ups_flags & 0x00000080) ? '1' : '0'; # UPS_replacebatt
+
+	# Flag  6: Serial Communication Established
+	$snmp_flags .= ($ups_flags & 0x00000100) ? '0' : '1'; # !UPS_commlost
+
+	# Flag  7: AVR Boost Active
+	$snmp_flags .= ($ups_flags & 0x00000004) ? '1' : '0'; # UPS_boost
+
+	# Flag  8: AVR Trim Active
+	$snmp_flags .= ($ups_flags & 0x00000002) ? '1' : '0'; # UPS_trim
+
+	# Flag  9: Overload
+	$snmp_flags .= ($ups_flags & 0x00000020) ? '1' : '0'; # UPS_overload
+
+	# Flag 10: Runtime Calibration
+	$snmp_flags .= ($ups_flags & 0x00000001) ? '1' : '0'; # UPS_calibration
+
+	# Flag 11: Batteries Discharged
+	$snmp_flags .= '0';
+
+	# Flag 12: Manual Bypass
+	$snmp_flags .= '0';
+
+	# Flag 13: Software Bypass
+	$snmp_flags .= '0';
+
+	# Flag 14: In Bypass due to Internal Fault
+	$snmp_flags .= '0';
+
+	# Flag 15: In Bypass due to Supply Failure
+	$snmp_flags .= '0';
+
+	# Flag 16: In Bypass due to Fan Failure
+	$snmp_flags .= '0';
+
+	# Flag 17: Sleeping on a Timer
+	$snmp_flags .= '0';
+
+	# Flag 18: Sleeping until Utility Power Returns
+	$snmp_flags .= '0';
+
+	# Flag 19: On
+	$snmp_flags .= '0';
+
+	# Flag 20: Rebooting
+	$snmp_flags .= '0';
+
+	# Flag 21: Battery Communication Lost
+	$snmp_flags .= ($ups_flags & 0x00000100) ? '1' : '0'; # UPS_commlost
+
+	# Flag 22: Graceful Shutdown Initiated
+	$snmp_flags .= ($ups_flags & 0x00380000) ? '1' : '0'; # UPS_shut_load | UPS_shutbtime | UPS_shut_ltime
+
+	# Flag 23: Smart Boost or Smart Trim Fault
+	$snmp_flags .= '0';
+
+	# Flag 24: Bad Output Voltage
+	$snmp_flags .= '0';
+
+	# Flag 25: Battery Charger Failure
+	$snmp_flags .= '0';
+
+	# Flag 26: High Battery Temperature
+	$snmp_flags .= '0';
+
+	# Flag 27: Warning Battery Temperature
+	$snmp_flags .= '0';
+
+	# Flag 28: Critical Battery Temperature
+	$snmp_flags .= '0';
+
+	# Flag 29: Self Test In Progress
+	$snmp_flags .= '0';
+
+	# Flag 30: Low Battery / On Battery
+	$snmp_flags .= ($ups_flags & 0x00000050) ? '1' : '0'; # UPS_battlow | UPS_onbatt
+
+	# Flag 31: Graceful Shutdown Issued by Upstream Device
+	$snmp_flags .= ($ups_flags & 0x00800000) ? '1' : '0'; # UPS_shut_remote
+
+	# Flag 32: Graceful Shutdown Issued by Downstream Device
+	$snmp_flags .= '0';
+
+	# Flag 33: No Batteries Attached
+	$snmp_flags .= ($ups_flags & 0x04000000) ? '0' : '1'; # !UPS_battpresent
+
+	# Flag 34: Synchronized Command is in Progress
+	$snmp_flags .= '0';
+
+	# Flag 35: Synchronized Sleeping Command is in Progress
+	$snmp_flags .= '0';
+
+	# Flag 36: Synchronized Rebooting Command is in Progress
+	$snmp_flags .= '0';
+
+	# Flag 37: Inverter DC Imbalance
+	$snmp_flags .= '0';
+
+	# Flag 38: Transfer Relay Failure
+	$snmp_flags .= '0';
+
+	# Flag 39: Shutdown or Unable to Transfer
+	$snmp_flags .= '0';
+
+	# Flag 40: Low Battery Shutdown
+	$snmp_flags .= '0';
+
+	# Flag 41: Electronic Unit Fan Failure
+	$snmp_flags .= '0';
+
+	# Flag 42: Main Relay Failure
+	$snmp_flags .= '0';
+
+	# Flag 43: Bypass Relay Failure
+	$snmp_flags .= '0';
+
+	# Flag 44: Temporary Bypass
+	$snmp_flags .= '0';
+
+	# Flag 45: High Internal Temperature
+	$snmp_flags .= '0';
+
+	# Flag 46: Battery Temperature Sensor Fault
+	$snmp_flags .= '0';
+
+	# Flag 47: Input Out of Range for Bypass
+	$snmp_flags .= '0';
+
+	# Flag 48: DC Bus Overvoltage
+	$snmp_flags .= '0';
+
+	# Flag 49: PFC Failure
+	$snmp_flags .= '0';
+
+	# Flag 50: Critical Hardware Fault
+	$snmp_flags .= '0';
+
+	# Flag 51: Green Mode/ECO Mode
+	$snmp_flags .= '0';
+
+	# Flag 52: Hot Standby
+	$snmp_flags .= '0';
+
+	# Flag 53: Emergency Power Off (EPO) Activated
+	$snmp_flags .= ($ups_flags & 0x00400000) ? '1' : '0'; # UPS_shut_emerg
+
+	# Flag 54: Load Alarm Violation
+	$snmp_flags .= '0';
+
+	# Flag 55: Bypass Phase Fault
+	$snmp_flags .= '0';
+
+	# Flag 56: UPS Internal Communication Failure
+	$snmp_flags .= '0';
+
+	# Flag 57: Efficiency Booster Mode
+	$snmp_flags .= '0';
+
+	# Flag 58: Off
+	$snmp_flags .= '0';
+
+	# Flag 59: Standby
+	$snmp_flags .= '0';
+
+	# Flag 60: Minor or Environment Alarm
+	$snmp_flags .= '0';
+
+	# Flag 61: <Not Used>
+	$snmp_flags .= '0';
+
+	# Flag 62: <Not Used>
+	$snmp_flags .= '0';
+
+	# Flag 63: <Not Used>
+	$snmp_flags .= '0';
+
+	# Flag 64: <Not Used>
+	$snmp_flags .= '0';
+
+	return $snmp_flags;
 }
 
 #################################################
