@@ -103,6 +103,7 @@ my $mapping = [
     ['FIRMWARE', '1.2.1.0',  ASN_OCTET_STR, \&to_str,      ], # upsAdvIdentFirmwareRevision
     ['SERIALNO', '1.2.3.0',  ASN_OCTET_STR, \&to_str,      ], # upsAdvIdentSerialNumber
 
+    ['STATFLAG', '2.1.1.0',  ASN_INTEGER,   \&to_bstatus,  ], # upsBasicBatterystatus
     ['TONBATT',  '2.1.2.0',  ASN_TIMETICKS, \&sec_to_tt,   ], # upsBasicBatteryTimeOnBattery
     ['BATTDATE', '2.1.3.0',  ASN_OCTET_STR, \&to_date,     ], # upsBasicBatteryLastReplaceDate
     ['BCHARGE',  '2.2.1.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvBatteryCapacity
@@ -145,13 +146,13 @@ my $mapping = [
     # Here's a list of all the possible things that can be returned from apcupsd, but don't
     # appear above and haven't been considered yet:
     # TODO: DATE HOSTNAME CABLE UPSMODE STARTTIME MBATTCHG MINTIMEL MAXTIME MAXLINEV MINLINEV DLOWBATT NUMXFERS XONBATT
-    #       CUMONBATT XOFFBAT STATFLAG DIPSW REG1 REG2 REG3 MANDATE NOMINV NOMPOWER HUMIDITY AMBTEMP EXTBATTS BADBATTS
+    #       CUMONBATT XOFFBAT DIPSW REG1 REG2 REG3 MANDATE NOMINV NOMPOWER HUMIDITY AMBTEMP EXTBATTS BADBATTS
     #
     # DONE: APC UPSNAME VERSION MODEL STATUS LINEV LOADPCT BCHARGE TIMELEFT OUTPUTV SENSE DWAKE DSHUTD LOTRANS HITRANS RETPCT
     #       ITEMP ALARMDEL BATTV LINEFREQ LASTXFER TONBATT SELFTEST STESTI SERIALNO BATTDATE NOMOUTV NOMBATTV FIRMWARE
-    #       APCMODEL
+    #       APCMODEL STATFLAG
     #
-    # Obvious OIDS to add support for: TODO upsBasicBatteryStatus
+    # Obvious OIDS to add support for: TODO MANDATE->upsAdvIdentDateOfManufacture
 ];
 
 sub to_str {
@@ -520,6 +521,20 @@ sub to_flags {
 	$snmp_flags .= '0';
 
 	return $snmp_flags;
+}
+
+sub to_bstatus {
+	# STATFLAG => upsBasicBatteryBtatus
+	# values are: (1)unknown (2)batteryNormal (3)batteryLow (4) batteryInFaultCondition
+	# We will return 3 if low battery, else 2.
+	
+	my $ups_flags = hex($_[0]);
+
+	if ($ups_flags & 0x00000040) { # UPS_battlow
+	       return 3;
+	}
+
+	return 2;
 }
 
 #################################################
