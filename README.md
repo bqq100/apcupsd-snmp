@@ -16,13 +16,13 @@ but to maximise my internet connectivity I now want the NAS to suhudown
 immediately, and I want something else to monitor the UPS and gracefull shutdown
 more and more of the network as teh power declines.
 
-My new monitoring solution I want to run apcupsd on a Raspbery Pi and have tne NAS
+In my new monitoring solution I want to run apcupsd on a Raspbery Pi and have tne NAS
 remotely pick up the UPS status from the pi.  The NAS usedes NUT (Network UPS Tools)
 to minitor the UPS (both locally and remotely), but the version of NUT installed is
 too old to support the apcupsd-ups driver that would allow it to directly monitor
 the remote apcupsd instance.  The NAS also supports remote monitoring of SNMP
-UPSs, and so by geting my pi to server the UPS data over SNMP I can point the NAS
-to the pi fro it's user interface without having to modify the manufacturer's
+UPSs, and so by geting my pi to serve the UPS data over SNMP I can point the NAS
+to the pi from it's user interface without having to modify the manufacturer's
 software.
 
 ## Installation
@@ -108,7 +108,7 @@ You can also query only one OID:
 
 Exactly what you get will depend on what your UPS (and apcupsd) supply.
 
-## What's bee changed from the original implementation
+## What's been changed from the original implementation
 
 * A general tidy-up and re-factoring of the code to remove use of newer perl features
 which should make it less dependent on the version of yor system's perl.
@@ -121,10 +121,10 @@ to shell out to /sbin/spcaccess
 * Re-implementation of the GETNEXT handler to better support walking the MIB from
 random enrtry points
 
-* Adding error codes to the SNMP responses for unhandled
+* Adding error codes to the SNMP responses for unhandled OIDs.
 
 * moving the code into its own namesapce (package) so that it is less likely to
-interfere with other net-snmp perl extensions, and introcude a mechanism for
+interfere with other net-snmp perl extensions, and introduce a mechanism for
 setting config values from snmpd.conf
 
 * Caching and re-using the values returned frm apcupsd - until they are old, and
@@ -141,6 +141,9 @@ the original ai=uthor's APC Back-UPS RS 500 and my APC Back-UPS ES 700.
 * I'm not a network programmer, and so I'm not convinced I'm handling all the
 edge cases for the network connectivity to apcupsd.  I'd welcome a review from
 someone who know more than I do in this area.
+
+* Anywhere there's a TODO XXX or FIXME label on a comment is indicative
+of something that needs reviewing or improving.
 
 ## Important notes
 
