@@ -1,9 +1,29 @@
 # Net-SNMP module for apcupsd
 
-This is Net-SNMP module for monitoring APC UPSes without SNMP support. It reads
-output from apcupsd (/sbin/apcaccess) and writes it into appropriate OIDs like
-UPSes with built-in SNMP support.
+This is a re-write of the original implementation, which can be found here:
+https://github.com/jirutka/apcupsd-snmp
 
+This is a Net-SNMP module for SNMP monitoring of APC UPSes that don't have SNMP
+support. It reads output from apcupsd and writes it into appropriate OIDs like
+UPSes with built-in SNMP support, but with rather fewer variables available.
+
+# What use is this?
+
+Why might you want such a thing?  You might have a NAS that you want to monitor
+a remote UPS.  In my case I have an APC Back-UPS ES 700 that I use to backup a
+NAS and some networking kit.  It used to be that the NAS monitored the UPS directly,
+but to maximise my internet connectivity I now want the NAS to suhudown
+immediately, and I want something else to monitor the UPS and gracefull shutdown
+more and more of the network as teh power declines.
+
+My new monitoring solution I want to run apcupsd on a Raspbery Pi and have tne NAS
+remotely pick up the UPS status from the pi.  The NAS usedes NUT (Network UPS Tools)
+to minitor the UPS (both locally and remotely), but the version of NUT installed is
+too old to support the apcupsd-ups driver that would allow it to directly monitor
+the remote apcupsd instance.  The NAS also supports remote monitoring of SNMP
+UPSs, and so by geting my pi to server the UPS data over SNMP I can point the NAS
+to the pi fro it's user interface without having to modify the manufacturer's
+software.
 
 ## Installation
  
@@ -13,8 +33,8 @@ put the following line to your snmpd.conf file:
 	perl do "/path/to/mod_apcupsd.pl";
 
 Net-snmp must be compiled with Perl support and apcupsd properly configured 
-and running!
-
+and running!  There is sample snmpd.conf file in the distribution, but I'm
+assuming you know how to install and configure both apcupsd and snmpd.
 
 ## Use
 
@@ -85,27 +105,50 @@ You can also query only one OID:
 
 	$ snmpwalk -v 2c -c public grid .1.3.6.1.4.1.318.1.1.1.2.2.3.0
 	PowerNet-MIB::upsAdvBatteryRunTimeRemaining.0 = Timeticks: (190200) 0:31:42.00
-	
+
+Exactly what you get will depend on what your UPS (and apcupsd) supply.
+
+## What's bee changed from the original implementation
+
+* A general tidy-up and re-factoring of the code to remove use of newer perl features
+which should make it less dependent on the version of yor system's perl.
+
+* Implementation of the apcupsd NIS protocol in perl so that the script doesn't need
+to shell out to /sbin/spcaccess
+
+* Cleaner conversion of values from apcupsd to the values needed by SNMP
+
+* Re-implementation of the GETNEXT handler to better support walking the MIB from
+random enrtry points
+
+* Adding error codes to the SNMP responses for unhandled
+
+* moving the code into its own namesapce (package) so that it is less likely to
+interfere with other net-snmp perl extensions, and introcude a mechanism for
+setting config values from snmpd.conf
+
+* Caching and re-using the values returned frm apcupsd - until they are old, and
+then stopping reporting.   I'll review the strategy here once I have better
+experience of how the NAS uses the values to implement it''s shutdown.
 
 ## What can be improved
 
-* Reimplement snmp_handler to correctly support walking through subtrees of 
-.1.3.6.1.4.1.318.1.1.1 (e.g. .1.3.6.1.4.1.318.1.1.1.2). Currently it can 
-list subtrees only on .1.3.6.1.4.1.318.1.1.1 and leafs.
-
 * Add remaining OIDs that apcupsd could get data for. I included only OIDs for 
-my APC Back-UP RS 500.
+the original ai=uthor's APC Back-UPS RS 500 and my APC Back-UPS ES 700.
 
 * Implement support for setting values and traps.
 
-*Feel free to contribute!* I have no intention in future development.
-
+* I'm not a network programmer, and so I'm not convinced I'm handling all the
+edge cases for the network connectivity to apcupsd.  I'd welcome a review from
+someone who know more than I do in this area.
 
 ## Important notes
 
-* Download PowerNet (APC) MIB file: 
-[powernet401.mib](http://www.michaelfmcnamara.com/files/mibs/powernet401.mib).
+* apcupsd: http://apcupsd.com/
 
-* I'm not skilled Perl programmer, this is my first Perl script I ever wrote.
-So if you find something weird in it, please let me know about it and fix it.
-However it's working perfectly fine for me, so I hope it's ok.
+* net-snmp: http://www.net-snmp.org/
+
+* NUT: https://networkupstools.org/
+
+* The latest PowerNet (APC) MIB file I could find is V4.3.2 and can be downloaded from here:
+https://www.apc.com/shop/uk/en/products/PowerNet-MIB-v4-3-2/P-SFPMIB432
