@@ -326,7 +326,7 @@ sub to_flags {
 
 	my $ups_flags = hex($_[0]);
 
-	my snmp_flags = '';
+	my $snmp_flags = '';
 
 	# Flag  1: Abnormal Condition Present
 	$snmp_flags .= '0';
