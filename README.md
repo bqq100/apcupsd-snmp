@@ -10,19 +10,19 @@ UPSes with built-in SNMP support, but with rather fewer variables available.
 # What use is this?
 
 Why might you want such a thing?  You might have a NAS that you want to monitor
-a remote UPS.  In my case I have an APC Back-UPS ES 700 that I use to backup a
+a remote UPS.  In my case I have an APC Back-UPS ES 700 that I use to protect a
 NAS and some networking kit.  It used to be that the NAS monitored the UPS directly,
 but to maximise my internet connectivity I now want the NAS to suhudown
-immediately, and I want something else to monitor the UPS and gracefull shutdown
-more and more of the network as teh power declines.
+immediately, and I want something else to monitor the UPS and gracefully shutdown
+more and more of the network as the power declines.
 
 In my new monitoring solution I want to run apcupsd on a Raspbery Pi and have tne NAS
-remotely pick up the UPS status from the pi.  The NAS usedes NUT (Network UPS Tools)
+remotely pick up the UPS status from the Pi.  The NAS uses NUT (Network UPS Tools)
 to minitor the UPS (both locally and remotely), but the version of NUT installed is
 too old to support the apcupsd-ups driver that would allow it to directly monitor
 the remote apcupsd instance.  The NAS also supports remote monitoring of SNMP
-UPSs, and so by geting my pi to serve the UPS data over SNMP I can point the NAS
-to the pi from it's user interface without having to modify the manufacturer's
+UPSs, and so by geting my Pi to serve the UPS data over SNMP I can point the NAS
+to the Pi from it's user interface without having to modify the manufacturer's
 software.
 
 ## Installation
@@ -111,7 +111,7 @@ Exactly what you get will depend on what your UPS (and apcupsd) supply.
 ## What's been changed from the original implementation
 
 * A general tidy-up and re-factoring of the code to remove use of newer perl features
-which should make it less dependent on the version of yor system's perl.
+which should make it less dependent on the version of your system's perl.
 
 * Implementation of the apcupsd NIS protocol in perl so that the script doesn't need
 to shell out to /sbin/spcaccess
@@ -127,20 +127,20 @@ random enrtry points
 interfere with other net-snmp perl extensions, and introduce a mechanism for
 setting config values from snmpd.conf
 
-* Caching and re-using the values returned frm apcupsd - until they are old, and
+* Caching and re-using the values returned from apcupsd - until they are old, and
 then stopping reporting.   I'll review the strategy here once I have better
-experience of how the NAS uses the values to implement it''s shutdown.
+experience of how the NAS uses the values to implement it's shutdown.
 
 ## What can be improved
 
 * Add remaining OIDs that apcupsd could get data for. I included only OIDs for 
-the original ai=uthor's APC Back-UPS RS 500 and my APC Back-UPS ES 700.
+the original author's APC Back-UPS RS 500 and my APC Back-UPS ES 700.
 
 * Implement support for setting values and traps.
 
 * I'm not a network programmer, and so I'm not convinced I'm handling all the
 edge cases for the network connectivity to apcupsd.  I'd welcome a review from
-someone who know more than I do in this area.
+someone who knows more than I do in this area.
 
 * The test harness (test.pl) needs improving, probably to make use of Test::More
 and giving it the ability to run under Test::Harness 'prove'.
