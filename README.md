@@ -114,7 +114,7 @@ Exactly what you get will depend on what your UPS (and apcupsd) supply.
 which should make it less dependent on the version of your system's perl.
 
 * Implementation of the apcupsd NIS protocol in perl so that the script doesn't need
-to shell out to /sbin/spcaccess
+to shell out to /sbin/apcaccess
 
 * Cleaner conversion of values from apcupsd to the values needed by SNMP
 
