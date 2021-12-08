@@ -105,7 +105,7 @@ my $mapping = [
 
     ['STATFLAG', '2.1.1.0',  ASN_INTEGER,   \&to_bstatus,  ], # upsBasicBatterystatus
     ['TONBATT',  '2.1.2.0',  ASN_TIMETICKS, \&sec_to_tt,   ], # upsBasicBatteryTimeOnBattery
-    ['BATTDATE', '2.1.3.0',  ASN_OCTET_STR, \&to_date,     ], # upsBasicBatteryLastReplaceDate
+    ['BATTDATE', '2.1.3.0',  ASN_OCTET_STR, \&to_str,      ], # upsBasicBatteryLastReplaceDate
     ['BCHARGE',  '2.2.1.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvBatteryCapacity
     ['ITEMP',    '2.2.2.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvBatteryTemperature TODO should be clamped to be 0 or above
     ['TIMELEFT', '2.2.3.0',  ASN_TIMETICKS, \&min_to_tt,   ], # upsAdvBatteryRunTimeRemaining
@@ -161,7 +161,7 @@ sub to_str {
 
 sub to_date {
     # Convert YYY-MM-DD to mm/dd/yyyy as dictated by the MIB description
-    my($y, $m, $d) = split('-',$_[0]);
+    my($y, $m, $d) = split(/-|\//,$_[0]);
     $y += 2000 if $y < 100; # TODO Assumes we have no batteries more than 20 years old? Is there a better answer?
     return sprintf("%02d/%02d/%04d", $m, $d, $y);;
 }
@@ -618,12 +618,12 @@ print STDERR "mod_apcupsd: registered at $base_oid \n" if ($debugging);
             $!=0;
             my @ready = $select->can_read(10);
 
-            if(@ready) { # There's something to read
+            if(sleep(1)) { # There's something to read
                 # TODO Should check that it's our socket ready to read from?
                 my $new_data = {};
                 my @oid_list;
 line:    
-                while(defined $socket->recv(my $line, 1024)) { # TODO Do we need to timout here or does recv always fail on network errors?
+                while(defined $socket->recv(my $line, 1024*1024)) { # TODO Do we need to timout here or does recv always fail on network errors?
 
                     for my $item (unpack("(n/A*)*", $line)) {
                         if(length $item > 0) {
