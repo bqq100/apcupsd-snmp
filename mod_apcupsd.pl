@@ -118,10 +118,14 @@ my $mapping = [
     ['ITEMP',    '2.3.13.0', ASN_GAUGE,     \&to_hpint,    ], # upsHighPrecExtdBatteryTemperature
 
     ['LINEV',    '3.2.1.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvInputLineVoltage
+    ['MAXLINEV', '3.2.2.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvInputMaxLineVoltage
+    ['MINLINEV', '3.2.3.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvInputMinLineVoltage
     ['LINEFREQ', '3.2.4.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvInputFrequency
     ['LASTXFER', '3.2.5.0',  ASN_INTEGER,   \&to_lf_cause, ], # upsAdvInputLineFailCause
     ['LINEV',    '3.3.1.0',  ASN_GAUGE,     \&to_hpint,    ], # upsHighPrecInputLineVoltage
     ['LINEFREQ', '3.3.4.0',  ASN_GAUGE,     \&to_hpint,    ], # upsHighPrecInputFrequency
+    ['MAXLINEV', '3.3.2.0',  ASN_GAUGE,     \&to_hpint,    ], # upsHighPrecInputMaxLineVoltage
+    ['MINLINEV', '3.3.3.0',  ASN_GAUGE,     \&to_hpint,    ], # upsHighPrecInputMinLineVoltage
 
     ['STATUS',   '4.1.1.0',  ASN_INTEGER,   \&to_status,   ], # upsBasicOutputStatus
     ['OUTPUTV',  '4.2.1.0',  ASN_GAUGE,     \&to_int,      ], # upsAdvOutputVoltage
@@ -145,12 +149,12 @@ my $mapping = [
 
     # Here's a list of all the possible things that can be returned from apcupsd, but don't
     # appear above and haven't been considered yet:
-    # TODO: DATE HOSTNAME CABLE UPSMODE STARTTIME MBATTCHG MINTIMEL MAXTIME MAXLINEV MINLINEV DLOWBATT NUMXFERS XONBATT
+    # TODO: DATE HOSTNAME CABLE UPSMODE STARTTIME MBATTCHG MINTIMEL MAXTIME DLOWBATT NUMXFERS XONBATT
     #       CUMONBATT XOFFBAT DIPSW REG1 REG2 REG3 MANDATE NOMINV NOMPOWER HUMIDITY AMBTEMP EXTBATTS BADBATTS
     #
     # DONE: APC UPSNAME VERSION MODEL STATUS LINEV LOADPCT BCHARGE TIMELEFT OUTPUTV SENSE DWAKE DSHUTD LOTRANS HITRANS RETPCT
     #       ITEMP ALARMDEL BATTV LINEFREQ LASTXFER TONBATT SELFTEST STESTI SERIALNO BATTDATE NOMOUTV NOMBATTV FIRMWARE
-    #       APCMODEL STATFLAG
+    #       APCMODEL STATFLAG MAXLINEV MINLINEV 
     #
     # Obvious OIDS to add support for: TODO MANDATE->upsAdvIdentDateOfManufacture
 ];
@@ -228,7 +232,7 @@ sub to_sense {
     return (defined $r ? $r : 0);
 }
 
-sub to_schedule {
+sub to_sched {
     # STESTI => upsAdvTestDiagnosticSchedule
     my $options = {
         'None'  => 1,   # unknown
