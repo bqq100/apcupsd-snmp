@@ -80,6 +80,30 @@ our $fetch_interval //= 20; # in snmpd.conf: perl $mod_apsupcd::fetch_interval =
 our $peer_host //= '127.0.0.1'; # in snmpd.conf: perl $mod_apsupcd::peer_host = "ups.example.com";
 our $peer_port //= 3551;        # in snmpd.conf: perl $mod_apsupcd::peer_port = 3551;
 
+# An alternate method of using snmpd.conf to enable debugging. Set the following in snmpd.conf: perl $debugging = 1; do "<path>mod_apcupsd.pl";
+if( $main::debugging ){
+  $debugging = $main::debugging;
+  print STDERR "Setting debugging to $debugging\n"; # Always log setting of debugging
+}
+
+# An alternate method of using snmpd.conf to set fetch interval. Set the following in snmpd.conf: perl $fetch_interval = 20; do "<path>mod_apcupsd.pl";
+if( $main::fetch_interval ){
+  $fetch_interval = $main::fetch_interval;
+  print STDERR "Setting fetch_interval to $fetch_interval\n" if ($debugging);
+}
+
+# An alternate method of using snmpd.conf to set peer_host. Set the following in snmpd.conf: perl $peer_host = "ups.example.com"; do "<path>mod_apcupsd.pl";
+if( $main::peer_host ){
+  $peer_host = $main::peer_host;
+  print STDERR "Setting peer_host to $peer_host\n" if ($debugging);
+}
+
+# An alternate method of using snmpd.conf to set peer_port. Set the following in snmpd.conf: perl $peer_port = 3551; do "<path>mod_apcupsd.pl";
+if( $main::peer_port ){
+  $peer_port = $main::peer_port;
+  print STDERR "Setting peer_port to $peer_port\n" if ($debugging);
+}
+
 #################################################
 #################### Mappings ###################
 #################################################
